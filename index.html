@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Manufacture Plant Inspection</title>
+  <style>
+    :root { --primary:#1f6feb; --bg:#0d1117; --panel:#161b22; --text:#e6edf3; --muted:#8b949e; --accent:#2ea043; --warn:#d29922; --danger:#f85149; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:Segoe UI, Roboto, Arial, sans-serif; background:var(--bg); color:var(--text); }
+    header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; background:var(--panel); border-bottom:1px solid #21262d; }
+    .title { font-size:18px; font-weight:600; }
+    .right { display:flex; gap:12px; align-items:center; }
+    .btn { background:var(--primary); color:#fff; border:none; padding:8px 14px; border-radius:6px; cursor:pointer; font-weight:600; }
+    .btn.secondary { background:#30363d; color:var(--text); }
+    .btn.danger { background:var(--danger); }
+    .btn:disabled { opacity:.6; cursor:not-allowed; }
+    .nav { display:flex; gap:8px; padding:10px 20px; background:#0b0f14; border-bottom:1px solid #21262d; }
+    .nav .tab { background:#1b2129; color:var(--text); border:none; padding:10px 14px; border-radius:6px; cursor:pointer; }
+    .nav .tab.active { background:var(--primary); }
+    main { padding:20px; }
+    section { display:none; }
+    section.active { display:block; }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .card { background:var(--panel); border:1px solid #21262d; border-radius:8px; padding:16px; }
+    .stat { display:flex; align-items:center; justify-content:space-between; }
+    .stat .label { color:var(--muted); }
+    .stat .value { font-size:24px; font-weight:700; }
+    .form-row { display:flex; gap:16px; }
+    fieldset { border:1px solid #30363d; border-radius:8px; padding:12px; }
+    legend { padding:0 6px; color:var(--muted); }
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    label { display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
+    input, select, textarea { width:100%; padding:10px; border:1px solid #30363d; border-radius:6px; background:#0b0f14; color:var(--text); }
+    textarea { resize:vertical; min-height:80px; }
+    .actions { display:flex; gap:10px; margin-top:16px; }
+    table { width:100%; border-collapse:collapse; }
+    th, td { border-bottom:1px solid #21262d; padding:10px; text-align:left; }
+    th { color:var(--muted); font-weight:600; background:#0b0f14; }
+    .login-status { color:var(--muted); font-size:12px; }
+    .modal { position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; }
+    .modal.show { display:flex; }
+    .modal-card { width:360px; background:var(--panel); border:1px solid #21262d; border-radius:10px; padding:16px; }
+    .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+    .close { background:#30363d; border:none; color:var(--text); border-radius:6px; padding:6px 10px; cursor:pointer; }
+    .note { color:var(--muted); font-size:12px; margin-top:8px; }
+    .pill { display:inline-block; padding:4px 8px; border-radius:16px; background:#1b2129; border:1px solid #30363d; font-size:12px; }
+    @media (max-width:900px) { .grid, .form-row { grid-template-columns:1fr; flex-direction:column; } .modal-card { width:92%; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title">Manufacture Plant Inspection</div>
+    <div class="right">
+      <div id="loginStatus" class="login-status">Not logged in</div>
+      <button id="loginBtn" class="btn">Login</button>
+      <button id="logoutBtn" class="btn secondary" style="display:none">Logout</button>
+    </div>
+  </header>
+  <div class="nav">
+    <button class="tab active" data-target="dashboardSection">Dashboard</button>
+    <button class="tab" data-target="databaseSection">Database</button>
+    <button class="tab" data-target="dataEntrySection">Data Entry</button>
+  </div>
+  <main>
+    <section id="dashboardSection" class="active">
+      <div class="grid">
+        <div class="card">
+          <div class="stat"><div><div class="label">TAC ID Issued</div></div><div id="tacCount" class="value">0</div></div>
+        </div>
+        <div class="card">
+          <div class="stat"><div><div class="label">Test Report Issued</div></div><div id="testReportCount" class="value">0</div></div>
+        </div>
+      </div>
+      <div class="note" style="margin-top:12px">Dashboard updates as records are saved.</div>
+    </section>
+    <section id="databaseSection">
+      <div class="card">
+        <div class="form-grid" style="margin-bottom:12px">
+          <div><label for="searchTac">TAC ID</label><input id="searchTac" type="text" /></div>
+          <div><label for="searchPlant">Plant Inspection Report Number</label><input id="searchPlant" type="text" /></div>
+          <div><label for="searchTest">Test Report Number</label><input id="searchTest" type="text" /></div>
+          <div><label for="searchPack">Pack Model</label><input id="searchPack" type="text" /></div>
+        </div>
+        <div class="actions"><button id="searchBtn" class="btn">Search</button><button id="clearSearchBtn" class="btn secondary">Clear</button></div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <div style="margin-bottom:8px"><span class="pill">Results</span></div>
+        <table>
+          <thead>
+            <tr>
+              <th>Entered By</th>
+              <th>Inspection Date</th>
+              <th>Manufacture Name</th>
+              <th>Address</th>
+              <th>Country</th>
+              <th>City</th>
+              <th>Pincode</th>
+              <th>TAC ID</th>
+              <th>Plant Inspection Report No.</th>
+              <th>Test Report No.</th>
+              <th>Pack Model</th>
+              <th>Remark</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody"></tbody>
+        </table>
+      </div>
+    </section>
+    <section id="dataEntrySection">
+      <div class="form-row">
+        <fieldset style="flex:1">
+          <legend>Manufacture Details</legend>
+          <div class="form-grid">
+            <div><label for="manuName">Manufacture Name</label><input id="manuName" type="text" /></div>
+            <div><label for="manuAddress">Address</label><input id="manuAddress" type="text" /></div>
+            <div><label for="manuCountry">Country</label><input id="manuCountry" type="text" /></div>
+            <div><label for="manuCity">City</label><input id="manuCity" type="text" /></div>
+            <div><label for="manuPincode">Pincode</label><input id="manuPincode" type="text" /></div>
+          </div>
+        </fieldset>
+        <fieldset style="flex:1">
+          <legend>Report Details</legend>
+          <div class="form-grid">
+            <div><label for="tacId">TAC ID</label><input id="tacId" type="text" /></div>
+            <div><label for="plantInspection">Plant Inspection Report Number</label><input id="plantInspection" type="text" /></div>
+            <div><label for="testReport">Test Report Number</label><input id="testReport" type="text" /></div>
+            <div><label for="packModel">Pack Model</label><input id="packModel" type="text" /></div>
+            <div><label for="remark">Remark</label><textarea id="remark"></textarea></div>
+          </div>
+        </fieldset>
+      </div>
+      <div class="form-grid" style="margin-top:12px">
+        <div><label for="inspectionDate">Inspection Date</label><input id="inspectionDate" type="date" /></div>
+        <div><label for="loginPerson">Login Person</label>
+          <select id="loginPerson">
+            <option value="">Select</option>
+            <option value="AMG">AMG</option>
+            <option value="VPA">VPA</option>
+            <option value="SPP">SPP</option>
+          </select>
+        </div>
+      </div>
+      <div class="actions"><button id="saveBtn" class="btn">Save</button><button id="resetBtn" class="btn secondary">Reset Form</button></div>
+      <div id="saveMsg" class="note"></div>
+    </section>
+  </main>
+  <div id="loginModal" class="modal">
+    <div class="modal-card">
+      <div class="modal-header"><div style="font-weight:700">Login</div><button id="closeLogin" class="close">Close</button></div>
+      <div style="display:grid; gap:10px">
+        <div><label for="username">Login</label><input id="username" type="text" placeholder="AMG / VPA / SPP" /></div>
+        <div><label for="password">Password</label><input id="password" type="password" placeholder="AMG123 / VPA123 / SPP123" /></div>
+        <button id="doLogin" class="btn">Login</button>
+      </div>
+      <div class="note">Use the provided credentials.</div>
+    </div>
+  </div>
+  <script>
+    const USERS = { AMG: 'AMG123', VPA: 'VPA123', SPP: 'SPP123' };
+    let currentUser = null;
+    let db = null;
+    let backendAvailable = false;
+    const BACKEND_URL = (location.origin && location.origin !== 'null') ? location.origin : 'http://localhost:5000';
+    async function healthCheck() {
+      try {
+        const r = await fetch(BACKEND_URL + '/api/health');
+        backendAvailable = r.ok;
+      } catch {
+        backendAvailable = false;
+      }
+    }
+    function openDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open('inspectionDB', 1);
+        req.onupgradeneeded = (e) => {
+          const d = e.target.result;
+          const store = d.createObjectStore('reports', { keyPath: 'id' });
+          store.createIndex('tacId', 'tacId');
+          store.createIndex('plantInspectionReportNumber', 'plantInspectionReportNumber');
+          store.createIndex('testReportNumber', 'testReportNumber');
+          store.createIndex('packModel', 'packModel');
+          store.createIndex('user', 'user');
+          store.createIndex('createdAt', 'createdAt');
+        };
+        req.onsuccess = () => { db = req.result; resolve(db); };
+        req.onerror = () => reject(req.error);
+      });
+    }
+    async function addReport(rec) {
+      if (backendAvailable) {
+        const res = await fetch(BACKEND_URL + '/api/reports', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(rec) });
+        if (!res.ok) throw new Error('backend save failed');
+        return true;
+      }
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(['reports'], 'readwrite');
+        const store = tx.objectStore('reports');
+        store.add(rec).onsuccess = () => resolve(true);
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+    async function getAllReports(q) {
+      if (backendAvailable) {
+        const params = new URLSearchParams();
+        if (q && q.tacId) params.set('tacId', q.tacId);
+        if (q && q.plantInspectionReportNumber) params.set('plantInspectionReportNumber', q.plantInspectionReportNumber);
+        if (q && q.testReportNumber) params.set('testReportNumber', q.testReportNumber);
+        if (q && q.packModel) params.set('packModel', q.packModel);
+        const res = await fetch(BACKEND_URL + '/api/reports' + (params.toString() ? ('?' + params.toString()) : ''));
+        if (!res.ok) throw new Error('backend fetch failed');
+        return await res.json();
+      }
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(['reports'], 'readonly');
+        const store = tx.objectStore('reports');
+        const req = store.getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+      });
+    }
+    function filterReports(items, q) {
+      const tac = (q.tacId || '').toLowerCase();
+      const plant = (q.plantInspectionReportNumber || '').toLowerCase();
+      const test = (q.testReportNumber || '').toLowerCase();
+      const pack = (q.packModel || '').toLowerCase();
+      return items.filter(x =>
+        (!tac || (x.tacId || '').toLowerCase().includes(tac)) &&
+        (!plant || (x.plantInspectionReportNumber || '').toLowerCase().includes(plant)) &&
+        (!test || (x.testReportNumber || '').toLowerCase().includes(test)) &&
+        (!pack || (x.packModel || '').toLowerCase().includes(pack))
+      );
+    }
+    function updateDashboard() {
+      if (backendAvailable) {
+        fetch(BACKEND_URL + '/api/stats').then(r => r.json()).then(s => {
+          document.getElementById('tacCount').textContent = String(s.tacIssued || 0);
+          document.getElementById('testReportCount').textContent = String(s.testReportIssued || 0);
+        }).catch(() => {
+          document.getElementById('tacCount').textContent = '0';
+          document.getElementById('testReportCount').textContent = '0';
+        });
+        return;
+      }
+      getAllReports().then(items => {
+        const tacIssued = new Set(items.filter(x => x.tacId && x.tacId.trim()).map(x => x.tacId.trim())).size;
+        const testIssued = items.filter(x => x.testReportNumber && x.testReportNumber.trim()).length;
+        document.getElementById('tacCount').textContent = String(tacIssued);
+        document.getElementById('testReportCount').textContent = String(testIssued);
+      });
+    }
+    function renderResults(items) {
+      const body = document.getElementById('resultsBody');
+      body.innerHTML = '';
+      items.forEach(x => {
+        const tr = document.createElement('tr');
+        const cells = [x.user || '', x.inspectionDate || '', x.manufactureName || '', x.address || '', x.country || '', x.city || '', x.pincode || '', x.tacId || '', x.plantInspectionReportNumber || '', x.testReportNumber || '', x.packModel || '', x.remark || ''];
+        cells.forEach(v => { const td = document.createElement('td'); td.textContent = v; tr.appendChild(td); });
+        body.appendChild(tr);
+      });
+    }
+    function switchSection(id) {
+      document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+    function setLoginStatus() {
+      const s = document.getElementById('loginStatus');
+      const logoutBtn = document.getElementById('logoutBtn');
+      const loginPerson = document.getElementById('loginPerson');
+      if (currentUser) { s.textContent = 'Logged in: ' + currentUser; logoutBtn.style.display = 'inline-block'; loginPerson.value = currentUser; }
+      else { s.textContent = 'Not logged in'; logoutBtn.style.display = 'none'; loginPerson.value = ''; }
+    }
+    document.querySelectorAll('.nav .tab').forEach(b => {
+      b.addEventListener('click', () => {
+        document.querySelectorAll('.nav .tab').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        switchSection(b.dataset.target);
+      });
+    });
+    document.getElementById('loginBtn').addEventListener('click', () => { document.getElementById('loginModal').classList.add('show'); });
+    document.getElementById('closeLogin').addEventListener('click', () => { document.getElementById('loginModal').classList.remove('show'); });
+    document.getElementById('logoutBtn').addEventListener('click', () => { currentUser = null; setLoginStatus(); });
+    document.getElementById('doLogin').addEventListener('click', () => {
+      const u = document.getElementById('username').value.trim().toUpperCase();
+      const p = document.getElementById('password').value.trim();
+      if (USERS[u] && USERS[u] === p) { currentUser = u; setLoginStatus(); document.getElementById('loginModal').classList.remove('show'); }
+      else { alert('Invalid credentials'); }
+    });
+    document.getElementById('saveBtn').addEventListener('click', async () => {
+      const msg = document.getElementById('saveMsg');
+      msg.textContent = '';
+      if (!currentUser) { msg.textContent = 'Login required.'; msg.style.color = 'var(--danger)'; return; }
+      const rec = {
+        id: 'R' + Date.now() + Math.random().toString(16).slice(2),
+        manufactureName: document.getElementById('manuName').value.trim(),
+        address: document.getElementById('manuAddress').value.trim(),
+        country: document.getElementById('manuCountry').value.trim(),
+        city: document.getElementById('manuCity').value.trim(),
+        pincode: document.getElementById('manuPincode').value.trim(),
+        tacId: document.getElementById('tacId').value.trim(),
+        plantInspectionReportNumber: document.getElementById('plantInspection').value.trim(),
+        testReportNumber: document.getElementById('testReport').value.trim(),
+        packModel: document.getElementById('packModel').value.trim(),
+        remark: document.getElementById('remark').value.trim(),
+        inspectionDate: document.getElementById('inspectionDate').value,
+        user: document.getElementById('loginPerson').value.trim() || currentUser,
+        createdAt: Date.now()
+      };
+      try { await addReport(rec); msg.textContent = 'Saved'; msg.style.color = 'var(--accent)'; updateDashboard(); }
+      catch(e) { msg.textContent = 'Save failed'; msg.style.color = 'var(--danger)'; }
+    });
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      ['manuName','manuAddress','manuCountry','manuCity','manuPincode','tacId','plantInspection','testReport','packModel','remark','inspectionDate'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+      document.getElementById('loginPerson').value = currentUser || '';
+      document.getElementById('saveMsg').textContent = '';
+    });
+    document.getElementById('searchBtn').addEventListener('click', async () => {
+      const q = {
+        tacId: document.getElementById('searchTac').value.trim(),
+        plantInspectionReportNumber: document.getElementById('searchPlant').value.trim(),
+        testReportNumber: document.getElementById('searchTest').value.trim(),
+        packModel: document.getElementById('searchPack').value.trim()
+      };
+      const list = await getAllReports(backendAvailable ? q : undefined);
+      renderResults(backendAvailable ? list : filterReports(list, q));
+    });
+    document.getElementById('clearSearchBtn').addEventListener('click', async () => {
+      ['searchTac','searchPlant','searchTest','searchPack'].forEach(id => { const el = document.getElementById(id); if (el) el.value=''; });
+      const all = await getAllReports(); renderResults(all);
+    });
+    (async () => {
+      await healthCheck();
+      if (backendAvailable) {
+        updateDashboard();
+        const all = await getAllReports();
+        renderResults(all);
+      } else {
+        openDB().then(() => { updateDashboard(); getAllReports().then(renderResults); });
+      }
+    })();
+  </script>
+</body>
+</html>
